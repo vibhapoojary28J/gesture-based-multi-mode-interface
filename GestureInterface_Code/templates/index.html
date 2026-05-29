@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gesture-Based Multi-Mode Interface</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at top, #16213e 0%, #0b0f1a 45%, #070a11 100%);
+            color: #e2e8f0;
+        }
+        .app-shell {
+            width: min(1200px, 100%);
+            margin: 0 auto;
+            padding: 24px;
+        }
+        header {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        header h1 {
+            margin: 0;
+            font-size: clamp(2rem, 2.8vw, 3rem);
+            letter-spacing: -0.04em;
+        }
+        header p {
+            margin: 0;
+            color: #94a3b8;
+            max-width: 720px;
+            line-height: 1.65;
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+        }
+        .panel {
+            border-radius: 24px;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            box-shadow: 0 28px 80px rgba(15, 23, 42, 0.25);
+            padding: 24px;
+        }
+        .panel h2 {
+            margin: 0 0 16px;
+            font-size: 1.4rem;
+            color: #f8fafc;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            color: #cbd5e1;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+        select, button {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            font-size: 1rem;
+            background: rgba(15, 23, 42, 0.94);
+            color: #f8fafc;
+            outline: none;
+        }
+        select {
+            appearance: none;
+        }
+        button {
+            cursor: pointer;
+            transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+        }
+        button:hover {
+            transform: translateY(-1px);
+        }
+        .primary-button {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+        .primary-button:hover {
+            background: linear-gradient(135deg, #1f9d51, #15803d);
+        }
+        .secondary-button {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            margin-top: 12px;
+        }
+        .status-grid {
+            display: grid;
+            gap: 14px;
+        }
+        .status-card {
+            padding: 18px;
+            border-radius: 18px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+        .status-card strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+        .status-card span {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+        .video-panel {
+            display: grid;
+            gap: 20px;
+        }
+        .video-card {
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            background: #090b10;
+            min-height: 520px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(148, 163, 184, 0.13);
+        }
+        .video-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .video-placeholder {
+            text-align: center;
+            color: #cbd5e1;
+            font-size: 1rem;
+            padding: 16px;
+            line-height: 1.6;
+        }
+        .video-banner {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .video-banner h3 {
+            margin: 0;
+            color: #f8fafc;
+            font-size: 1.1rem;
+        }
+        .badge {
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: white;
+            background: #475569;
+        }
+        .active-badge {
+            background: #22c55e;
+        }
+        .warning-badge {
+            background: #eab308;
+        }
+        .error-badge {
+            background: #ef4444;
+        }
+        .status-value {
+            display: inline-block;
+            margin-top: 6px;
+        }
+        .status-value--green {
+            color: #22c55e;
+        }
+        .status-value--yellow {
+            color: #fbbf24;
+        }
+        .status-value--red {
+            color: #f87171;
+        }
+        @media (max-width: 960px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <header>
+            <h1>Gesture-Based Multi-Mode Interface</h1>
+            <p>Live webcam feed and gesture interaction in a modern dashboard experience.</p>
+        </header>
+
+        <div class="layout">
+            <div class="panel">
+                <h2>Control Panel</h2>
+                <div class="control-group">
+                    <label for="modeSelect">Mode Selection</label>
+                    <select id="modeSelect">
+                        <option value="Cursor" {% if current_mode == 'Cursor' %}selected{% endif %}>Cursor</option>
+                        <option value="Drawing" {% if current_mode == 'Drawing' %}selected{% endif %}>Drawing</option>
+                        <option value="Presentation" {% if current_mode == 'Presentation' %}selected{% endif %}>Presentation</option>
+                        <option value="Media" {% if current_mode == 'Media' %}selected{% endif %}>Media</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button id="cameraOnBtn" class="primary-button">Camera On</button>
+                    <button id="cameraOffBtn" class="secondary-button">Camera Off</button>
+                </div>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <strong>Current mode</strong>
+                        <span id="currentMode">{{ current_mode }}</span>
+                    </div>
+                    <div class="status-card">
+                        <strong>Current gesture</strong>
+                        <span id="currentGesture">{{ current_gesture }}</span>
+                    </div>
+                    <div class="status-card">
+                        <strong>System status</strong>
+                        <span id="appStatus">Stopped</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-panel">
+                <div class="panel video-card">
+                    <div class="video-banner">
+                        <h3>Live Camera Feed</h3>
+                        <span id="cameraStateBadge" class="badge">Offline</span>
+                    </div>
+                    <img id="videoFeed" src="" alt="Live camera feed" style="display:none;" />
+                    <div id="videoPlaceholder" class="video-placeholder">Press Camera On to start the live stream.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modeSelect = document.getElementById('modeSelect');
+        const currentMode = document.getElementById('currentMode');
+        const currentGesture = document.getElementById('currentGesture');
+        const appStatus = document.getElementById('appStatus');
+        const cameraStateBadge = document.getElementById('cameraStateBadge');
+        const videoFeed = document.getElementById('videoFeed');
+        const videoPlaceholder = document.getElementById('videoPlaceholder');
+        const cameraOnBtn = document.getElementById('cameraOnBtn');
+        const cameraOffBtn = document.getElementById('cameraOffBtn');
+
+        function setStatusVisual(status) {
+            const normalized = status.toLowerCase();
+            appStatus.textContent = status;
+            cameraStateBadge.textContent = status;
+            cameraStateBadge.className = 'badge';
+            if (normalized.includes('running') || normalized.includes('on')) {
+                cameraStateBadge.classList.add('active-badge');
+            } else if (normalized.includes('failed') || normalized.includes('unable')) {
+                cameraStateBadge.classList.add('error-badge');
+            } else if (normalized.includes('off') || normalized.includes('stopped')) {
+                cameraStateBadge.classList.add('warning-badge');
+            } else {
+                cameraStateBadge.classList.add('badge');
+            }
+        }
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                currentMode.textContent = data.mode;
+                currentGesture.textContent = data.gesture;
+                setStatusVisual(data.status);
+                if (data.camera_running) {
+                    videoFeed.style.display = 'block';
+                    videoPlaceholder.style.display = 'none';
+                    if (!videoFeed.src.includes('/video')) {
+                        videoFeed.src = '/video?ts=' + Date.now();
+                    }
+                } else {
+                    videoFeed.style.display = 'none';
+                    videoPlaceholder.style.display = 'block';
+                    videoPlaceholder.textContent = 'Press Camera On to start the live stream.';
+                    videoFeed.src = '';
+                }
+            } catch (err) {
+                setStatusVisual('Disconnected');
+                videoFeed.style.display = 'none';
+                videoPlaceholder.style.display = 'block';
+                videoPlaceholder.textContent = 'Unable to connect to the server.';
+            }
+        }
+
+        async function setMode(mode) {
+            try {
+                const response = await fetch('/set_mode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode }),
+                });
+                const data = await response.json();
+                if (data.success) {
+                    currentMode.textContent = data.mode;
+                }
+            } catch (err) {
+                console.error('Mode update failed', err);
+            }
+        }
+
+        async function cameraOn() {
+            try {
+                const response = await fetch('/camera/on', { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    videoFeed.src = '/video?ts=' + Date.now();
+                } else {
+                    setStatusVisual(data.message || 'Unable to start camera');
+                }
+            } catch (err) {
+                setStatusVisual('Camera start failed');
+            }
+        }
+
+        async function cameraOff() {
+            try {
+                await fetch('/camera/off', { method: 'POST' });
+                videoFeed.src = '';
+                videoFeed.style.display = 'none';
+                videoPlaceholder.style.display = 'block';
+                videoPlaceholder.textContent = 'Camera is off. Press Camera On to start.';
+            } catch (err) {
+                console.error('Camera stop failed', err);
+            }
+        }
+
+        modeSelect.addEventListener('change', () => setMode(modeSelect.value));
+        cameraOnBtn.addEventListener('click', cameraOn);
+        cameraOffBtn.addEventListener('click', cameraOff);
+
+        setInterval(updateStatus, 1000);
+        updateStatus();
+    </script>
+</body>
+</html>
